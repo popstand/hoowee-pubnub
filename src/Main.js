@@ -14,9 +14,16 @@ import {
   RTCView,
 } from 'react-native-webrtc';
 
-import {connect} from './Services/PubnubService';
+import {
+  connect,
+  subscribe,
+  publishMessage,
+} from './Services/PubnubService';
 
 const configuration = {"iceServers": [{"url": "stun:stun.l.google.com:19302"}]};
+
+const CHANNEL_NAME = 'HooweeTestRoom';
+const JOIN = 'join';
 
 
 export default class Main extends Component {
@@ -33,6 +40,12 @@ export default class Main extends Component {
     this.onCreateOfferSuccess = this.onCreateOfferSuccess.bind(this);
     this.onCreateAnswerSuccess = this.onCreateAnswerSuccess.bind(this);
 
+
+    this.subscribeToChannel = this.subscribeToChannel.bind(this);
+    this.onPresenceChange = this.onPresenceChange.bind(this);
+    this.onMessageReceived = this.onMessageReceived.bind(this);
+    this.onPublishMessage = this.onPublishMessage.bind(this);
+
     this.state = {
       callStatus: 'READY',
       localStreamUrl: undefined,
@@ -40,38 +53,89 @@ export default class Main extends Component {
     }
   }
 
-  componentDidMount(){
-    connect();
+  async componentDidMount(){
+    console.log('COMPONENT DID MOUNT --->');
+    await connect();
+    console.log('after connection to pubnub');
+
+    this.subscribeToChannel();
+
   }
+
+  componentWillUnmount() {
+    this.state.subscription.unsubscribe();
+  }
+
+  subscribeToChannel() {
+    const channel = CHANNEL_NAME;
+
+    if (this.state.subscription) {
+      this.state.subscription.unsubscribe();
+
+    }
+    this.setState({
+      subscription: subscribe(
+        channel,
+        p => this.onPresenceChange(p),
+        m => this.onMessageReceived(m)
+      )
+    });
+  }
+
+  onPresenceChange(presenceData) {
+    console.log('presence change --->', presenceData);
+  }
+
+  onMessageReceived(message) {
+    console.log('message --->', message);
+  }
+
+  onPublishMessage() {
+    const {selectedChannel} = this.props;
+
+    const channel = CHANNEL_NAME;
+
+    publishMessage(channel, JOIN)
+      .catch(error => {
+        console.error('Failed to publish message:', error);
+      });
+  }
+
+
+
+
 
   initCall() {
     if(this.state.callStatus === 'ONGOING') return;
+    this.onPublishMessage();
 
-    MediaStreamTrack.getSources(sourceInfos => {
-      console.log(sourceInfos);
-      let videoSourceId;
-      for (const i = 0; i < sourceInfos.length; i++) {
-        const sourceInfo = sourceInfos[i];
-        if(sourceInfo.kind == "video" && sourceInfo.facing == "front") {
-          videoSourceId = sourceInfo.id;
-        }
-      }
-      getUserMedia({
-        audio: true,
-        video: {
-          mandatory: {
-            minWidth: 500, // Provide your own width, height and frame rate here
-            minHeight: 300,
-            minFrameRate: 30
-          },
-          facingMode: "user",
-          optional: (videoSourceId ? [{sourceId: videoSourceId}] : [])
-        }
-      }, (stream) => {
-        console.log('dddd', stream);
-        this.getUserMediaCallback(stream);
-      }, this.errorCallback);
-    });
+
+
+    // MediaStreamTrack.getSources(sourceInfos => {
+    //   console.log(sourceInfos);
+    //   let videoSourceId;
+    //   for (const i = 0; i < sourceInfos.length; i++) {
+    //     const sourceInfo = sourceInfos[i];
+    //     if(sourceInfo.kind == "video" && sourceInfo.facing == "front") {
+    //       videoSourceId = sourceInfo.id;
+    //     }
+    //   }
+    //   getUserMedia({
+    //     audio: true,
+    //     video: {
+    //       mandatory: {
+    //         minWidth: 500, // Provide your own width, height and frame rate here
+    //         minHeight: 300,
+    //         minFrameRate: 30
+    //       },
+    //       facingMode: "user",
+    //       optional: (videoSourceId ? [{sourceId: videoSourceId}] : [])
+    //     }
+    //   }, (stream) => {
+    //     console.log('dddd', stream);
+    //     this.getUserMediaCallback(stream);
+    //   }, this.errorCallback);
+    // });
   }
 
   getUserMediaCallback(stream) {

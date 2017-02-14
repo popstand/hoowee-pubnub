@@ -71,3 +71,45 @@ const handshake = pubnub =>
       }
     });
   });
+
+  export const subscribe = (channel, presenceHandler, messageHandler) => {
+    presenceSubscriptions.add(presenceHandler);
+
+    messageSubscriptons.add(messageHandler);
+
+    connect().then(({ pubnub }) => {
+      pubnub.subscribe({
+        channels: [channel],
+        withPresence: true,
+      });
+    });
+
+    return {
+      unsubscribe: () => {
+        presenceSubscriptions.delete(presenceHandler);
+
+        messageSubscriptons.delete(messageHandler);
+
+        return connect().then(({pubnub}) => {
+          pubnub.unsubscribe({channels: [channel]});
+        });
+      },
+    };
+  };
+
+  export const publishMessage = (channel, message) =>
+  new Promise((resolve, reject) => {
+    connect().then(({ pubnub }) =>
+      pubnub.publish({
+        channel,
+        message,
+      },
+      (status, response) => {
+        if (status.error) {
+          reject(status.category);
+        }
+        else {
+          resolve();
+        }
+      }));
+  });
