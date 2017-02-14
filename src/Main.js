@@ -14,6 +14,8 @@ import {
   RTCView,
 } from 'react-native-webrtc';
 
+import {connect} from './Services/PubnubService';
+
 const configuration = {"iceServers": [{"url": "stun:stun.l.google.com:19302"}]};
 
 
@@ -36,6 +38,10 @@ export default class Main extends Component {
       localStreamUrl: undefined,
       remoteStreamUrl: undefined,
     }
+  }
+
+  componentDidMount(){
+    connect();
   }
 
   initCall() {
