@@ -1116,6 +1116,7 @@
 					"-ObjC",
 					"-lc++",
 				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.popstand.hooweePubnub;
 				PRODUCT_NAME = hooweePubnub;
 				VERSIONING_SYSTEM = "apple-generic";
 			};
@@ -1139,6 +1140,7 @@
 					"-ObjC",
 					"-lc++",
 				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.popstand.hooweePubnub;
 				PRODUCT_NAME = hooweePubnub;
 				VERSIONING_SYSTEM = "apple-generic";
 			};
